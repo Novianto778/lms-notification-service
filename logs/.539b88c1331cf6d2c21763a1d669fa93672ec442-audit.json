@@ -1,0 +1,20 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "D:\\Project Belajar\\2025\\simple-express-boilerplate\\logs\\.539b88c1331cf6d2c21763a1d669fa93672ec442-audit.json",
+    "files": [
+        {
+            "date": 1742628075514,
+            "name": "D:\\Project Belajar\\2025\\simple-express-boilerplate\\logs\\error-2025-03-22.log",
+            "hash": "6d8085d8d0634136a67bf4b4fd79bd7d6f9290d04bbf4cf645a3e7c88c8ca097"
+        },
+        {
+            "date": 1742743053984,
+            "name": "D:\\Project Belajar\\2025\\simple-express-boilerplate\\logs\\error-2025-03-23.log",
+            "hash": "d8a4136fa9e1f56097d5abefeb5ba14729030465e0d00323d38e824aa6028fcc"
+        }
+    ],
+    "hashType": "sha256"
+}
