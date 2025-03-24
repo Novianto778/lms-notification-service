@@ -13,4 +13,8 @@ export const env = cleanEnv(process.env, {
   CORS_ORIGIN: str({ devDefault: testOnly('http://localhost:3000') }),
   COMMON_RATE_LIMIT_MAX_REQUESTS: num({ devDefault: testOnly(1000) }),
   COMMON_RATE_LIMIT_WINDOW_MS: num({ devDefault: testOnly(1000) }),
+  REDIS_HOST: str({ devDefault: testOnly('localhost') }),
+  REDIS_PORT: num({ devDefault: testOnly(6379) }),
+  REDIS_PASSWORD: str({ devDefault: testOnly(undefined) }),
+  DATABASE_URL: str(),
 });
