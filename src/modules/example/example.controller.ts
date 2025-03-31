@@ -5,14 +5,6 @@ import { handleServiceResponse } from '../../utils/httpHandlers';
 import { exampleService } from './example.service';
 import { GetAllExamples } from './example.types';
 
-// export const getExample = (req: Request, res: Response) => {
-//   res.json({ message: 'Example GET endpoint' });
-// };
-
-// export const createExample = (req: Request, res: Response) => {
-//   res.json({ message: 'Example created', data: req.body });
-// };
-
 class ExampleController {
   public getExample: RequestHandler = async (req: Request, res: Response) => {
     const queryParams = parseQueryOrParams<GetAllExamples>(req.query);
