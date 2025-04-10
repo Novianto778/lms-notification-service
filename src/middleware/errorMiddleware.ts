@@ -1,11 +1,12 @@
 import { ErrorRequestHandler, RequestHandler } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { ZodError } from 'zod';
-import { AppError, AuthenticationError, ValidationError } from '../model/errorModel';
+import { AppError, AuthenticationError, ValidationError, PrismaError } from '../model/errorModel';
 import { ServiceResponse } from '../model/serviceResponse';
 import { handleServiceResponse } from '../utils/httpHandlers';
 import { zodErrorMessage } from '../utils/zodError';
 import logger from '../config/logger';
+import { Prisma } from '@prisma/client';
 
 const unexpectedRequest: RequestHandler = (_req, res) => {
   res.sendStatus(StatusCodes.NOT_FOUND);
@@ -21,8 +22,18 @@ const globalErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
 
   if (err instanceof ZodError) {
     const errorMsg = zodErrorMessage(err);
-
     const errorRes = ServiceResponse.failure(errorMsg, null, StatusCodes.BAD_REQUEST);
+    handleServiceResponse(errorRes, res);
+    return;
+  }
+
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    const prismaError = new PrismaError(err);
+    const errorRes = ServiceResponse.failure(
+      prismaError.getErrors(),
+      null,
+      prismaError.getStatusCodes(),
+    );
     handleServiceResponse(errorRes, res);
     return;
   }

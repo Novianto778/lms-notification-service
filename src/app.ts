@@ -1,15 +1,28 @@
 import express from 'express';
-import 'express-async-error';
 import cors from 'cors';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
-import routes from './modules';
 import errorMiddleware from './middleware/errorMiddleware';
 import { env } from './config/env';
+import dotenv from 'dotenv';
+import { kafkaProducer } from './config/kafka';
+import routes from './modules';
 
-dotenv.config();
+dotenv.config(); // Load environment variables from .env file
 
 const app = express();
+
+// Connect to Kafka
+kafkaProducer.connect().catch((error) => {
+  console.error('Failed to connect to Kafka:', error);
+  process.exit(1);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM signal received.');
+  await kafkaProducer.disconnect();
+  process.exit(0);
+});
 
 // Middleware
 app.use(
@@ -34,7 +47,7 @@ app.get('/health', (_req, res) => {
   });
 });
 
-app.use('/api', routes);
+app.use('/', routes);
 
 // Error Handler
 app.use(errorMiddleware());

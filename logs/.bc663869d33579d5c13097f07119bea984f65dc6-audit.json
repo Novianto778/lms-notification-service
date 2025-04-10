@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "D:\\Project Belajar\\2025\\lms-microservices\\services\\user-service\\logs\\.bc663869d33579d5c13097f07119bea984f65dc6-audit.json",
+    "files": [
+        {
+            "date": 1744295848016,
+            "name": "D:\\Project Belajar\\2025\\lms-microservices\\services\\user-service\\logs\\application-2025-04-10.log",
+            "hash": "8a6536f77bbd41e08da509ffe179f5ba206a417c18fc9cf9f13e1bbf3b962b83"
+        }
+    ],
+    "hashType": "sha256"
+}

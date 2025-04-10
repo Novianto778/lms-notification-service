@@ -4,6 +4,6 @@ import { ServiceResponse } from '../model/serviceResponse';
 export const handleServiceResponse = <T>(
   serviceResponse: ServiceResponse<T>,
   response: Response,
-) => {
-  return response.status(serviceResponse.statusCode).send(serviceResponse);
+): Response<ServiceResponse<T>> => {
+  return response.status(serviceResponse.statusCode).json(serviceResponse);
 };

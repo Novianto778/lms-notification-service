@@ -1,5 +1,5 @@
-import dotenv from 'dotenv';
 import { cleanEnv, host, num, port, str, testOnly } from 'envalid';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -17,4 +17,7 @@ export const env = cleanEnv(process.env, {
   REDIS_PORT: num({ devDefault: testOnly(6379) }),
   REDIS_PASSWORD: str({ default: undefined }),
   DATABASE_URL: str(),
+  JWT_SECRET: str({ default: 'your-secret-key' }),
+  JWT_EXPIRES_IN: str({ default: '24h' }),
+  KAFKA_BROKER: str({ default: 'localhost:9092' }),
 });
