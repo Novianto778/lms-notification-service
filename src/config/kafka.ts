@@ -1,4 +1,4 @@
-import { Kafka, Producer } from 'kafkajs';
+import { Kafka, Producer, Partitioners } from 'kafkajs';
 import { env } from './env';
 import logger from './logger';
 
@@ -12,16 +12,18 @@ class KafkaProducer {
   private isConnected: boolean = false;
 
   constructor() {
-    this.producer = kafka.producer();
+    this.producer = kafka.producer({
+      createPartitioner: Partitioners.LegacyPartitioner,
+    });
   }
 
   async connect(): Promise<void> {
     try {
       await this.producer.connect();
       this.isConnected = true;
-      console.log('🚀 Connected to Kafka');
+      logger.info('Connected to Kafka');
     } catch (error) {
-      console.error('❌ Error connecting to Kafka:', error);
+      logger.error('Error connecting to Kafka:', error);
       throw error;
     }
   }
@@ -30,9 +32,9 @@ class KafkaProducer {
     try {
       await this.producer.disconnect();
       this.isConnected = false;
-      console.log('👋 Disconnected from Kafka');
+      logger.info('Disconnected from Kafka');
     } catch (error) {
-      console.error('❌ Error disconnecting from Kafka:', error);
+      logger.error('Error disconnecting from Kafka:', error);
       throw error;
     }
   }
@@ -54,7 +56,7 @@ class KafkaProducer {
         ],
       });
     } catch (error) {
-      console.error(`❌ Error producing message to topic ${topic}:`, error);
+      logger.error(`Error producing message to topic ${topic}:`, error);
       throw error;
     }
   }

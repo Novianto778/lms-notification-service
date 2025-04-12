@@ -17,7 +17,10 @@ export const env = cleanEnv(process.env, {
   REDIS_PORT: num({ devDefault: testOnly(6379) }),
   REDIS_PASSWORD: str({ default: undefined }),
   DATABASE_URL: str(),
-  JWT_SECRET: str({ default: 'your-secret-key' }),
-  JWT_EXPIRES_IN: str({ default: '24h' }),
+  JWT_SECRET: str({ default: 'your-access-token-secret' }),
+  JWT_REFRESH_SECRET: str({ default: 'your-refresh-token-secret' }),
+  JWT_EXPIRES_IN: str({ default: '15m' }),
+  JWT_REFRESH_EXPIRES_IN: str({ default: '7d' }),
   KAFKA_BROKER: str({ default: 'localhost:9092' }),
+  USER_IDLE_TIMEOUT: num({ default: 900000 }), // 15 minutes in milliseconds
 });

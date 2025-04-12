@@ -5,17 +5,24 @@ import { AuthenticationError } from '../model/errorModel';
 import { JWTPayload } from '../types/express';
 import { env } from '../config/env';
 import { Role } from '@prisma/client';
+import { UserActivityManager } from '../utils/userActivity';
 
-export const authenticateToken = (req: Request, _res: Response, next: NextFunction) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    throw new AuthenticationError('No token provided', StatusCodes.UNAUTHORIZED);
-  }
-
+export const authenticateToken = async (req: Request, _res: Response, next: NextFunction) => {
   try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      throw new AuthenticationError('No token provided', StatusCodes.UNAUTHORIZED);
+    }
+
     const decoded = jwt.verify(token, env.JWT_SECRET) as JWTPayload;
+
+    // Check if user has been idle for too long
+    const isActive = await UserActivityManager.checkAndUpdateActivity(decoded.id);
+    if (!isActive) {
+      throw new AuthenticationError('Session expired due to inactivity', StatusCodes.UNAUTHORIZED);
+    }
 
     req.user = {
       id: decoded.id,
@@ -25,15 +32,24 @@ export const authenticateToken = (req: Request, _res: Response, next: NextFuncti
 
     next();
   } catch (error) {
-    throw new AuthenticationError('Invalid token', StatusCodes.UNAUTHORIZED);
+    // Forward all errors to the global error handler
+    if (error instanceof jwt.JsonWebTokenError) {
+      next(new AuthenticationError('Invalid token', StatusCodes.UNAUTHORIZED));
+    } else {
+      next(error);
+    }
   }
 };
 
 export const authorizeRoles = (...roles: Role[]) => {
   return (req: Request, _res: Response, next: NextFunction) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      throw new AuthenticationError('Unauthorized access', StatusCodes.FORBIDDEN);
+    try {
+      if (!req.user || !roles.includes(req.user.role)) {
+        throw new AuthenticationError('Unauthorized access', StatusCodes.FORBIDDEN);
+      }
+      next();
+    } catch (error) {
+      next(error);
     }
-    next();
   };
 };
