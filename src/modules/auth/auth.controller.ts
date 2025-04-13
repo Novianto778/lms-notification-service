@@ -23,6 +23,16 @@ export class AuthController {
     const serviceResponse = await authService.logout(req.body.refreshToken);
     handleServiceResponse(serviceResponse, res);
   });
+
+  public forgotPassword = asyncWrapper(async (req: Request, res: Response) => {
+    const serviceResponse = await authService.forgotPassword(req.body.email);
+    handleServiceResponse(serviceResponse, res);
+  });
+
+  public resetPassword = asyncWrapper(async (req: Request, res: Response) => {
+    const serviceResponse = await authService.resetPassword(req.body.token, req.body.password);
+    handleServiceResponse(serviceResponse, res);
+  });
 }
 
 export const authController = new AuthController();

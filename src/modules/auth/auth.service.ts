@@ -1,14 +1,17 @@
 import { StatusCodes } from 'http-status-codes';
+import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { AppError } from '../../model/errorModel';
 import { ServiceResponse } from '../../model/serviceResponse';
+import { emailQueue } from '../../config/bull';
+import { env } from '../../config/env';
 import { userRepository } from '../user/user.repository';
 import { authRepository } from './auth.repository';
 import { LoginUserDto, RegisterUserDto, TokenPayload } from './auth.types';
-import { env } from '../../config/env';
 import { User } from '@prisma/client';
 import { UserActivityManager } from '../../utils/userActivity';
+import ms, { StringValue } from 'ms';
 
 export class AuthService {
   private readonly ACCESS_TOKEN_EXPIRES_IN = '15m';
@@ -120,6 +123,49 @@ export class AuthService {
   async logout(token: string): Promise<ServiceResponse<null>> {
     await this.authRepo.revokeRefreshToken(token);
     return ServiceResponse.success('Logged out successfully', null);
+  }
+
+  async forgotPassword(email: string): Promise<ServiceResponse<null>> {
+    const user = await this.userRepo.findByEmailAsync(email);
+    console.log(user);
+
+    if (!user) {
+      // Return success even if user not found for security
+      return ServiceResponse.success('Email not found');
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + ms(env.PASSWORD_RESET_TOKEN_EXPIRES_IN as StringValue));
+
+    // Save reset token
+    await this.authRepo.createPasswordReset(user.id, resetToken, expiresAt);
+
+    // Queue reset email
+    await emailQueue.add('sendResetPasswordEmail', {
+      email: user.email,
+      resetToken,
+    });
+
+    return ServiceResponse.success('Reset email sent');
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<ServiceResponse<null>> {
+    const passwordReset = await this.authRepo.findPasswordReset(token);
+
+    if (!passwordReset || passwordReset.expiresAt < new Date()) {
+      throw new AppError('Invalid or expired reset token', StatusCodes.BAD_REQUEST);
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await this.userRepo.updatePassword({
+      where: { id: passwordReset.userId },
+      data: { password: hashedPassword },
+    });
+    await this.authRepo.deletePasswordReset(token);
+
+    return ServiceResponse.success('Password reset successful');
   }
 }
 

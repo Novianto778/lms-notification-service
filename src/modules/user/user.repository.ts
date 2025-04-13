@@ -40,6 +40,10 @@ export class UserRepository {
       },
     });
   }
+
+  async updatePassword(data: { where: { id: string }; data: { password: string } }): Promise<User> {
+    return await prisma.user.update(data);
+  }
 }
 
 export const userRepository = new UserRepository();

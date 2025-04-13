@@ -15,3 +15,12 @@ export const loginUserSchema = z.object({
 export const refreshTokenSchema = z.object({
   refreshToken: z.string(),
 });
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('Invalid email address'),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string(),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});

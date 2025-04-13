@@ -1,4 +1,4 @@
-import { cleanEnv, host, num, port, str, testOnly } from 'envalid';
+import { cleanEnv, host, num, port, str, testOnly, bool } from 'envalid';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -23,4 +23,12 @@ export const env = cleanEnv(process.env, {
   JWT_REFRESH_EXPIRES_IN: str({ default: '7d' }),
   KAFKA_BROKER: str({ default: 'localhost:9092' }),
   USER_IDLE_TIMEOUT: num({ default: 900000 }), // 15 minutes in milliseconds
+  SMTP_HOST: str({ default: 'smtp.gmail.com' }),
+  SMTP_PORT: num({ default: 587 }),
+  SMTP_SECURE: bool({ default: false }),
+  SMTP_USER: str(),
+  SMTP_PASSWORD: str(),
+  SMTP_FROM: str({ default: 'noreply@yourapp.com' }),
+  CLIENT_URL: str({ default: 'http://localhost:3000' }),
+  PASSWORD_RESET_TOKEN_EXPIRES_IN: str({ default: '15m' }),
 });

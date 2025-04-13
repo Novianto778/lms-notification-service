@@ -1,4 +1,4 @@
-import { PrismaClient, RefreshToken } from '@prisma/client';
+import { PrismaClient, RefreshToken, PasswordReset } from '@prisma/client';
 import prisma from '../../config/prisma';
 
 export class AuthRepository {
@@ -36,6 +36,33 @@ export class AuthRepository {
     await this.prisma.refreshToken.updateMany({
       where: { userId, revokedAt: null },
       data: { revokedAt: new Date() },
+    });
+  }
+
+  async createPasswordReset(
+    userId: string,
+    token: string,
+    expiresAt: Date,
+  ): Promise<PasswordReset> {
+    return this.prisma.passwordReset.create({
+      data: {
+        userId,
+        token,
+        expiresAt,
+      },
+    });
+  }
+
+  async findPasswordReset(token: string): Promise<PasswordReset | null> {
+    return this.prisma.passwordReset.findUnique({
+      where: { token },
+      include: { user: true },
+    });
+  }
+
+  async deletePasswordReset(token: string): Promise<void> {
+    await this.prisma.passwordReset.delete({
+      where: { token },
     });
   }
 }
