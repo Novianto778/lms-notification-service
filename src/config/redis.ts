@@ -1,9 +1,10 @@
 import Redis from 'ioredis';
+import { env } from './env';
 
 const redis = new Redis({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: Number(process.env.REDIS_PORT) || 6379,
-  password: process.env.REDIS_PASSWORD || undefined,
+  host: env.REDIS_HOST || 'localhost',
+  port: Number(env.REDIS_PORT) || 6379,
+  password: env.REDIS_PASSWORD || undefined,
 });
 
 redis.on('connect', () => console.log('🚀 Connected to Redis'));

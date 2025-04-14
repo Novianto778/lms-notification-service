@@ -13,44 +13,87 @@ enum Role {
   student
 }
 
-model User {
-  id            String          @id @default(uuid()) @db.Uuid
-  name          String          @db.VarChar(255)
-  email         String          @unique @db.VarChar(255)
-  password      String
-  role          Role            @default(student)
-  createdAt     DateTime        @default(now()) @map("created_at")
-  updatedAt     DateTime        @default(now()) @updatedAt @map("updated_at")
+model Course {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String   @db.VarChar(255)
+  description String   @db.Text
+  price       Decimal  @db.Decimal(10, 2)
+  coverUrl    String?  @db.Text @map("cover_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  instructorId String  @db.Uuid @map("instructor_id")
+  published   Boolean  @default(false)
 
   // Relations
-  refreshTokens RefreshToken[]
-  passwordResets PasswordReset[]
+  // instructor   User     @relation(fields: [instructorId], references: [id])
+  modules     Module[]
+  enrollments Enrollment[]
 
-  @@map("users")
+  @@map("courses")
 }
 
-model RefreshToken {
-  id        String   @id @default(uuid()) @db.Uuid
-  token     String   @unique
-  userId    String   @map("user_id") @db.Uuid
-  issuedAt  DateTime @default(now()) @map("issued_at")
-  expiresAt DateTime @map("expires_at")
-  revokedAt DateTime? @map("revoked_at")
+model Module {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  order       Int
+  courseId    String   @db.Uuid @map("course_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course      Course    @relation(fields: [courseId], references: [id])
+  subModules  SubModule[]
 
-  @@map("refresh_tokens")
-  @@index([userId])
+  @@map("modules")
 }
 
-model PasswordReset {
-  id        String   @id @default(uuid()) @db.Uuid
-  token     String   @unique
-  userId    String   @db.Uuid
-  user      User     @relation(fields: [userId], references: [id])
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+model SubModule {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String   @db.VarChar(255)
+  content     String   @db.Text
+  order       Int
+  moduleId    String   @db.Uuid @map("module_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  @@index([token])
+  // Relations
+  module      Module    @relation(fields: [moduleId], references: [id])
+  attachments Attachment[]
+
+  @@map("sub_modules")
+}
+
+model Attachment {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String   @db.VarChar(255)
+  fileUrl     String   @db.Text @map("file_url")
+  fileType    String   @db.VarChar(50)
+  subModuleId String   @db.Uuid @map("sub_module_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  subModule   SubModule @relation(fields: [subModuleId], references: [id])
+
+  @@map("attachments")
+}
+
+model Enrollment {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid @map("user_id")
+  courseId  String   @db.Uuid @map("course_id")
+  course    Course   @relation(fields: [courseId], references: [id])
+  status    EnrollmentStatus @default(active)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, courseId])
+  @@map("enrollments")
+}
+
+enum EnrollmentStatus {
+  active
+  completed
+  cancelled
 }

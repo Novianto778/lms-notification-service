@@ -1,7 +1,7 @@
 import { Queue, Worker } from 'bullmq';
 import { env } from './env';
 import logger from './logger';
-import { sendResetPasswordEmail } from '../utils/emailService';
+import { sendEnrollmentConfirmationEmail } from '../utils/emailService';
 
 const connection = {
   host: env.REDIS_HOST,
@@ -29,8 +29,8 @@ const emailWorker = new Worker(
       logger.info(`Processing email job ${job.id} of type ${job.name}`);
 
       switch (job.name) {
-        case 'sendResetPasswordEmail':
-          await sendResetPasswordEmail(job.data.email, job.data.resetToken);
+        case 'sendEnrollmentConfirmation':
+          await sendEnrollmentConfirmationEmail(job.data.email, job.data.courseName);
           break;
         default:
           throw new Error(`Unknown job type: ${job.name}`);

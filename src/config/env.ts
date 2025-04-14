@@ -31,4 +31,18 @@ export const env = cleanEnv(process.env, {
   SMTP_FROM: str({ default: 'noreply@yourapp.com' }),
   CLIENT_URL: str({ default: 'http://localhost:3000' }),
   PASSWORD_RESET_TOKEN_EXPIRES_IN: str({ default: '15m' }),
+  USER_SERVICE_URL: str({ default: 'http://user-service:4001' }),
+  // NOTIFICATION_SERVICE_URL: str({ default: 'http://notification-service:4002' }),
+  SERVICE_RETRY_ATTEMPTS: num({ default: 5 }),
+  SERVICE_RETRY_INTERVAL: num({ default: 5000 }),
+
+  // File Upload Configuration
+  MAX_FILE_SIZE: num({ default: 10485760 }), // 10MB in bytes
+  ALLOWED_FILE_TYPES: str({ default: 'image/jpeg,image/png,image/gif,application/pdf,video/mp4' }),
+  MAX_FILES_PER_REQUEST: num({ default: 5 }),
+
+  // Cloudinary Configuration
+  CLOUDINARY_CLOUD_NAME: str(),
+  CLOUDINARY_API_KEY: str(),
+  CLOUDINARY_API_SECRET: str(),
 });

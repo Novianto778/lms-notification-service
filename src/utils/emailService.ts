@@ -12,19 +12,20 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export const sendResetPasswordEmail = async (email: string, resetToken: string): Promise<void> => {
-  const resetUrl = `${env.CLIENT_URL}/reset-password?token=${resetToken}`;
-
+export const sendEnrollmentConfirmationEmail = async (
+  email: string,
+  courseName: string,
+): Promise<void> => {
   const mailOptions = {
     from: env.SMTP_FROM,
     to: email,
-    subject: 'Password Reset Request',
+    subject: 'Course Enrollment Confirmation',
     html: `
-      <h1>Password Reset Request</h1>
-      <p>You requested to reset your password. Click the link below to reset it:</p>
-      <a href="${resetUrl}">Reset Password</a>
-      <p>This link will expire in ${formatDuration(env.PASSWORD_RESET_TOKEN_EXPIRES_IN)}.</p>
-      <p>If you didn't request this, please ignore this email.</p>
+      <h1>Enrollment Confirmation</h1>
+      <p>Congratulations! You have successfully enrolled in the course:</p>
+      <h2>${courseName}</h2>
+      <p>You can now access your course materials through your dashboard.</p>
+      <p>Happy learning!</p>
     `,
   };
 
