@@ -5,8 +5,54 @@ import { validateRequest } from '../../middleware/validateMiddleware';
 import { courseController } from './course.controller';
 import { createCourseSchema, courseIdParamSchema } from './course.schema';
 import { Role } from '@prisma/client';
+import { env } from '../../config/env';
+import { AppError } from '../../model/errorModel';
+import { StatusCodes } from 'http-status-codes';
 
-const upload = multer({ dest: 'uploads/' });
+// Configure multer to store files in memory
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: env.MAX_FILE_SIZE,
+    files: env.MAX_FILES_PER_REQUEST,
+  },
+  fileFilter: (_req, file, cb) => {
+    const allowedTypes = env.ALLOWED_FILE_TYPES.split(',');
+
+    if (!file.mimetype) {
+      cb(new AppError('Invalid file type', StatusCodes.BAD_REQUEST));
+      return;
+    }
+
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(
+        new AppError(
+          `Invalid file type. Allowed types are: ${allowedTypes.join(', ')}`,
+          StatusCodes.BAD_REQUEST,
+        ),
+      );
+    }
+  },
+});
+
+// Wrap multer middleware to handle errors
+const handleFileUpload =
+  (fieldName: string) =>
+  (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    upload.single(fieldName)(req, res, (err) => {
+      if (err instanceof multer.MulterError) {
+        next(new AppError(`File upload error: ${err.message}`, StatusCodes.BAD_REQUEST));
+        return;
+      } else if (err) {
+        next(err);
+        return;
+      }
+      next();
+    });
+  };
+
 const router = express.Router();
 
 // Course routes
@@ -14,7 +60,7 @@ router.post(
   '/',
   authenticateToken,
   authorizeRoles(Role.instructor),
-  upload.single('cover'),
+  handleFileUpload('cover'),
   validateRequest({
     body: createCourseSchema,
   }),
@@ -59,7 +105,7 @@ router.post(
   '/sub-modules/:subModuleId/attachments',
   authenticateToken,
   authorizeRoles(Role.instructor),
-  upload.single('file'),
+  handleFileUpload('file'),
   courseController.addAttachment,
 );
 

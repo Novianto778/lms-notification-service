@@ -2,7 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { AppError } from '../../model/errorModel';
 import { ServiceResponse } from '../../model/serviceResponse';
 import { CourseRepository } from './course.repository';
-import { uploadFile } from '../../config/cloudinary';
+import { uploadFromBuffer } from '../../config/cloudinary';
 import {
   CourseId,
   CourseWithInstructor,
@@ -37,25 +37,32 @@ export class CourseService {
     instructorId: string,
     coverImage?: Express.Multer.File,
   ): Promise<ServiceResponse<{ courseId: string }>> {
-    let coverUrl: string | undefined;
+    try {
+      let coverUrl: string | undefined;
 
-    if (coverImage) {
-      coverUrl = await uploadFile(coverImage, 'covers');
+      if (coverImage) {
+        coverUrl = await uploadFromBuffer(coverImage.buffer, 'covers');
+      }
+
+      const course = await this.courseRepository.createCourse(
+        {
+          ...data,
+          coverUrl,
+        },
+        instructorId,
+      );
+
+      return ServiceResponse.success(
+        'Course created successfully',
+        { courseId: course.id },
+        StatusCodes.CREATED,
+      );
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('Failed to create course', StatusCodes.INTERNAL_SERVER_ERROR);
     }
-
-    const course = await this.courseRepository.createCourse(
-      {
-        ...data,
-        coverUrl,
-      },
-      instructorId,
-    );
-
-    return ServiceResponse.success(
-      'Course created successfully',
-      { courseId: course.id },
-      StatusCodes.CREATED,
-    );
   }
 
   async getAllCourses(): Promise<ServiceResponse<CourseWithCountsAndInstructor[]>> {
@@ -176,13 +183,22 @@ export class CourseService {
     title: string,
     file: Express.Multer.File,
   ): Promise<ServiceResponse<AttachmentWithoutRelations>> {
-    const fileUrl = await uploadFile(file, 'attachments');
-    const attachment = await this.courseRepository.createAttachment(subModuleId, {
-      title,
-      fileUrl,
-      fileType: file.mimetype,
-    });
-    return ServiceResponse.success('Attachment added successfully', attachment);
+    try {
+      const fileUrl = await uploadFromBuffer(file.buffer, 'attachments');
+
+      const attachment = await this.courseRepository.createAttachment(subModuleId, {
+        title,
+        fileUrl,
+        fileType: file.mimetype,
+      });
+
+      return ServiceResponse.success('Attachment added successfully', attachment);
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('Failed to add attachment', StatusCodes.INTERNAL_SERVER_ERROR);
+    }
   }
 }
 

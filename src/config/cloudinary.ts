@@ -1,5 +1,8 @@
-import { v2 as cloudinary } from 'cloudinary';
+import { v2 as cloudinary, ResourceType } from 'cloudinary';
+import streamifier from 'streamifier';
 import { env } from './env';
+import { AppError } from '../model/errorModel';
+import { StatusCodes } from 'http-status-codes';
 
 cloudinary.config({
   cloud_name: env.CLOUDINARY_CLOUD_NAME,
@@ -7,23 +10,47 @@ cloudinary.config({
   api_secret: env.CLOUDINARY_API_SECRET,
 });
 
-export const uploadFile = async (file: Express.Multer.File, folder: string): Promise<string> => {
-  try {
-    const result = await cloudinary.uploader.upload(file.path, {
-      folder: `course-platform/${folder}`,
-      resource_type: 'auto',
-    });
-    return result.secure_url;
-  } catch (error) {
-    throw new Error(`Failed to upload file: ${(error as Error).message}`);
-  }
+export const uploadFromBuffer = (
+  buffer: Buffer,
+  folder: string,
+  resourceType: 'image' | 'raw' | 'video' | 'auto' = 'auto',
+): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: `course-platform/${folder}`,
+        resource_type: resourceType,
+      },
+      (error, result) => {
+        if (error) {
+          reject(
+            new AppError(`Upload failed: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR),
+          );
+          return;
+        }
+        resolve(result?.secure_url || '');
+      },
+    );
+
+    streamifier.createReadStream(buffer).pipe(uploadStream);
+  });
 };
 
-export const deleteFile = async (publicId: string): Promise<void> => {
+export const deleteFile = async (url: string): Promise<void> => {
   try {
+    if (!url) {
+      throw new AppError('Invalid file URL', StatusCodes.BAD_REQUEST);
+    }
+    const publicId = url.split('/').slice(-1)[0].split('.')[0];
     await cloudinary.uploader.destroy(publicId);
   } catch (error) {
-    throw new Error(`Failed to delete file: ${(error as Error).message}`);
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError(
+      `Failed to delete file: ${(error as Error).message}`,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
