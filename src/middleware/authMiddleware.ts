@@ -5,7 +5,6 @@ import { AuthenticationError } from '../model/errorModel';
 import { JWTPayload } from '../types/express';
 import { env } from '../config/env';
 import { Role } from '@prisma/client';
-import { UserActivityManager } from '../utils/userActivity';
 
 export const authenticateToken = async (req: Request, _res: Response, next: NextFunction) => {
   try {
@@ -19,10 +18,6 @@ export const authenticateToken = async (req: Request, _res: Response, next: Next
     const decoded = jwt.verify(token, env.JWT_SECRET) as JWTPayload;
 
     // Check if user has been idle for too long
-    const isActive = await UserActivityManager.checkAndUpdateActivity(decoded.id);
-    if (!isActive) {
-      throw new AuthenticationError('Session expired due to inactivity', StatusCodes.UNAUTHORIZED);
-    }
 
     req.user = {
       id: decoded.id,

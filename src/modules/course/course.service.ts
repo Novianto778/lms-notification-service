@@ -3,7 +3,17 @@ import { AppError } from '../../model/errorModel';
 import { ServiceResponse } from '../../model/serviceResponse';
 import { CourseRepository } from './course.repository';
 import { uploadFile } from '../../config/cloudinary';
-import { CreateCourseDto } from './course.types';
+import {
+  CourseId,
+  CourseWithInstructor,
+  CreateCourseDto,
+  CreateModuleDto,
+  CreateSubModuleDto,
+  ModuleWithoutRelations,
+  SubModuleWithoutRelations,
+  AttachmentWithoutRelations,
+  CourseWithCountsAndInstructor,
+} from './course.types';
 import { emailQueue } from '../../config/bull';
 import { userServiceClient } from '../../config/apiClient';
 
@@ -48,7 +58,7 @@ export class CourseService {
     );
   }
 
-  async getAllCourses(): Promise<ServiceResponse<any>> {
+  async getAllCourses(): Promise<ServiceResponse<CourseWithCountsAndInstructor[]>> {
     const courses = await this.courseRepository.findAllCourses();
 
     try {
@@ -79,7 +89,7 @@ export class CourseService {
     }
   }
 
-  async getCourseById(id: string): Promise<ServiceResponse<any>> {
+  async getCourseById(id: string): Promise<ServiceResponse<CourseWithInstructor>> {
     const course = await this.courseRepository.findCourseById(id);
     if (!course) {
       throw new AppError('Course not found', StatusCodes.NOT_FOUND);
@@ -106,7 +116,7 @@ export class CourseService {
     }
   }
 
-  async enrollInCourse(userId: string, courseId: string): Promise<ServiceResponse<null>> {
+  async enrollInCourse(userId: string, courseId: string): Promise<ServiceResponse<CourseId>> {
     const course = await this.courseRepository.findCourseById(courseId);
     if (!course) {
       throw new AppError('Course not found', StatusCodes.NOT_FOUND);
@@ -131,7 +141,7 @@ export class CourseService {
         courseName: course.title,
       });
 
-      return ServiceResponse.success('Successfully enrolled in course');
+      return ServiceResponse.success('Successfully enrolled in course', course.id);
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -142,8 +152,8 @@ export class CourseService {
 
   async addModule(
     courseId: string,
-    data: { title: string; description?: string; order: number },
-  ): Promise<ServiceResponse<any>> {
+    data: CreateModuleDto,
+  ): Promise<ServiceResponse<ModuleWithoutRelations>> {
     const course = await this.courseRepository.findCourseById(courseId);
     if (!course) {
       throw new AppError('Course not found', StatusCodes.NOT_FOUND);
@@ -155,8 +165,8 @@ export class CourseService {
 
   async addSubModule(
     moduleId: string,
-    data: { title: string; content: string; order: number },
-  ): Promise<ServiceResponse<any>> {
+    data: CreateSubModuleDto,
+  ): Promise<ServiceResponse<SubModuleWithoutRelations>> {
     const subModule = await this.courseRepository.createSubModule(moduleId, data);
     return ServiceResponse.success('SubModule added successfully', subModule);
   }
@@ -165,7 +175,7 @@ export class CourseService {
     subModuleId: string,
     title: string,
     file: Express.Multer.File,
-  ): Promise<ServiceResponse<any>> {
+  ): Promise<ServiceResponse<AttachmentWithoutRelations>> {
     const fileUrl = await uploadFile(file, 'attachments');
     const attachment = await this.courseRepository.createAttachment(subModuleId, {
       title,
