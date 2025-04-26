@@ -1,8 +1,8 @@
 import express from 'express';
-import courseRoutes from './course/course.routes';
+import notificationRoutes from './notification/notification.routes';
 
 const router = express.Router();
 
-router.use('/courses', courseRoutes);
+router.use('/notifications', notificationRoutes);
 
 export default router;

@@ -1,30 +1,16 @@
-import express from 'express';
 import cors from 'cors';
+import express from 'express';
 import helmet from 'helmet';
-import errorMiddleware from './middleware/errorMiddleware';
 import { env } from './config/env';
 import { kafkaProducer } from './config/kafka';
-import routes from './modules';
 import logger from './config/logger';
-import { ServiceHealthChecker } from './utils/serviceHealthChecker';
-import { serviceDependencies } from './config/services';
+import errorMiddleware from './middleware/errorMiddleware';
+import routes from './modules';
 
 const app = express();
 
 async function initializeApp() {
   try {
-    // Initialize service health checker
-    const healthChecker = new ServiceHealthChecker(
-      env.SERVICE_RETRY_ATTEMPTS,
-      env.SERVICE_RETRY_INTERVAL,
-    );
-
-    // Wait for all required services
-    const servicesAvailable = await healthChecker.checkAllServices(serviceDependencies);
-    if (!servicesAvailable) {
-      throw new Error('Failed to connect to required services');
-    }
-
     // Connect to Kafka
     await kafkaProducer.connect();
 

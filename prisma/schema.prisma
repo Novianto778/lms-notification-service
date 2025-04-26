@@ -7,93 +7,36 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  admin
-  instructor
-  student
+enum NotificationType {
+  COURSE_CREATED
+  COURSE_UPDATED
+  ENROLLMENT_CONFIRMED
+  NEW_COMMENT
+  ASSIGNMENT_POSTED
+  GRADE_POSTED
+  SYSTEM_ANNOUNCEMENT
 }
 
-model Course {
-  id          String   @id @default(uuid()) @db.Uuid
-  title       String   @db.VarChar(255)
-  description String   @db.Text
-  price       Decimal  @db.Decimal(10, 2)
-  coverUrl    String?  @db.Text @map("cover_url")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  instructorId String  @db.Uuid @map("instructor_id")
-  published   Boolean  @default(false)
-
-  // Relations
-  // instructor   User     @relation(fields: [instructorId], references: [id])
-  modules     Module[]
-  enrollments Enrollment[]
-
-  @@map("courses")
+enum NotificationStatus {
+  UNREAD
+  READ
+  ARCHIVED
 }
 
-model Module {
-  id          String   @id @default(uuid()) @db.Uuid
-  title       String   @db.VarChar(255)
-  description String?  @db.Text
-  order       Int
-  courseId    String   @db.Uuid @map("course_id")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+model Notification {
+  id          String            @id @default(uuid()) @db.Uuid
+  userId      String            @db.Uuid @map("user_id")
+  type        NotificationType
+  title       String            @db.VarChar(255)
+  message     String            @db.Text
+  status      NotificationStatus @default(UNREAD)
+  metadata    Json?             // For additional dynamic data
+  readAt      DateTime?         @map("read_at")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
 
-  // Relations
-  course      Course    @relation(fields: [courseId], references: [id])
-  subModules  SubModule[]
-
-  @@map("modules")
-}
-
-model SubModule {
-  id          String   @id @default(uuid()) @db.Uuid
-  title       String   @db.VarChar(255)
-  content     String   @db.Text
-  order       Int
-  moduleId    String   @db.Uuid @map("module_id")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  module      Module    @relation(fields: [moduleId], references: [id])
-  attachments Attachment[]
-
-  @@map("sub_modules")
-}
-
-model Attachment {
-  id          String   @id @default(uuid()) @db.Uuid
-  title       String   @db.VarChar(255)
-  fileUrl     String   @db.Text @map("file_url")
-  fileType    String   @db.VarChar(50)
-  subModuleId String   @db.Uuid @map("sub_module_id")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  subModule   SubModule @relation(fields: [subModuleId], references: [id])
-
-  @@map("attachments")
-}
-
-model Enrollment {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @db.Uuid @map("user_id")
-  courseId  String   @db.Uuid @map("course_id")
-  course    Course   @relation(fields: [courseId], references: [id])
-  status    EnrollmentStatus @default(active)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@unique([userId, courseId])
-  @@map("enrollments")
-}
-
-enum EnrollmentStatus {
-  active
-  completed
-  cancelled
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("notifications")
 }

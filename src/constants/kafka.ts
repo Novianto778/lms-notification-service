@@ -1,5 +1,5 @@
 export const KAFKA_TOPICS = {
-  USER_CREATED: 'user.created',
-  USER_UPDATED: 'user.updated',
-  USER_DELETED: 'user.deleted',
+  NOTIFICATION_CREATED: 'notification.created',
+  NOTIFICATION_UPDATED: 'notification.updated',
+  NOTIFICATION_READ: 'notification.read',
 } as const;
