@@ -11,6 +11,7 @@ import { kafkaProducer } from '../../config/kafka';
 import { KAFKA_TOPICS } from '../../constants/kafka';
 import redis from '../../config/redis';
 import { Notification } from '@prisma/client';
+import { getWebSocketManager } from '../../config/websocket';
 
 export class NotificationService {
   private notificationRepository: NotificationRepository;
@@ -41,7 +42,10 @@ export class NotificationService {
     const userCacheKey = this.getUserNotificationsCacheKey(data.userId);
     await redis.del(userCacheKey);
 
-    // Emit event for real-time notifications
+    // Send real-time notification via WebSocket
+    getWebSocketManager().sendToUser(data.userId, 'notification:created', notification);
+
+    // Emit event for other services
     await kafkaProducer.produce(KAFKA_TOPICS.NOTIFICATION_CREATED, {
       notification,
       userId: data.userId,
@@ -97,6 +101,9 @@ export class NotificationService {
     // Invalidate user notifications cache
     const userCacheKey = this.getUserNotificationsCacheKey(userId);
     await redis.del(userCacheKey);
+
+    // Send real-time update
+    getWebSocketManager().sendToUser(userId, 'notification:updated', updatedNotification);
 
     // Emit event
     await kafkaProducer.produce(KAFKA_TOPICS.NOTIFICATION_READ, {

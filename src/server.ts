@@ -5,9 +5,9 @@ const PORT = process.env.PORT || 5000;
 
 async function startServer() {
   try {
-    const app = await initializeApp();
-    const server = app.listen(PORT, () => {
-      logger.info(`Course service running on port ${PORT}`);
+    const server = await initializeApp();
+    server.listen(PORT, () => {
+      logger.info(`Notification service running on port ${PORT}`);
     });
 
     // Graceful Shutdown

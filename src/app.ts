@@ -1,9 +1,11 @@
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
+import http from 'http';
 import { env } from './config/env';
 import { kafkaProducer } from './config/kafka';
 import logger from './config/logger';
+import { initializeWebSocket } from './config/websocket';
 import errorMiddleware from './middleware/errorMiddleware';
 import routes from './modules';
 
@@ -42,7 +44,10 @@ async function initializeApp() {
       process.exit(0);
     });
 
-    return app;
+    const server = http.createServer(app);
+    initializeWebSocket(server);
+
+    return server; // Return the HTTP server instead of the Express app
   } catch (error) {
     logger.error('Failed to initialize application:', error);
     process.exit(1);

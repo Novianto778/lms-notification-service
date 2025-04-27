@@ -1,11 +1,10 @@
 import express from 'express';
-import { NotificationController } from './notification.controller';
+import { notificationController, NotificationController } from './notification.controller';
 import { authenticateToken } from '../../middleware/authMiddleware';
 import { validateRequest } from '../../middleware/validateMiddleware';
 import { updateNotificationSchema } from './notification.schema';
 
 const router = express.Router();
-const notificationController = new NotificationController();
 
 router.get('/', authenticateToken, notificationController.getUserNotifications);
 
