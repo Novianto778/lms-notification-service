@@ -12,6 +12,7 @@ import { KAFKA_TOPICS } from '../../constants/kafka';
 import redis from '../../config/redis';
 import { Notification } from '@prisma/client';
 import { getWebSocketManager } from '../../config/websocket';
+import { sseManager } from '../../config/sseManager';
 
 export class NotificationService {
   private notificationRepository: NotificationRepository;
@@ -44,6 +45,9 @@ export class NotificationService {
 
     // Send real-time notification via WebSocket
     getWebSocketManager().sendToUser(data.userId, 'notification:created', notification);
+
+    // Send real-time notification via SSE
+    sseManager.sendToUser(data.userId, 'notification_created', notification);
 
     // Emit event for other services
     await kafkaProducer.produce(KAFKA_TOPICS.NOTIFICATION_CREATED, {

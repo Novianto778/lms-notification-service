@@ -1,10 +1,13 @@
 import express from 'express';
-import { notificationController, NotificationController } from './notification.controller';
 import { authenticateToken } from '../../middleware/authMiddleware';
 import { validateRequest } from '../../middleware/validateMiddleware';
+import { notificationController, streamNotifications } from './notification.controller';
 import { updateNotificationSchema } from './notification.schema';
 
 const router = express.Router();
+
+// SSE endpoint
+router.get('/stream', authenticateToken, streamNotifications);
 
 router.get('/', authenticateToken, notificationController.getUserNotifications);
 

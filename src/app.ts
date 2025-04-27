@@ -6,6 +6,7 @@ import { env } from './config/env';
 import { kafkaProducer } from './config/kafka';
 import logger from './config/logger';
 import { initializeWebSocket } from './config/websocket';
+import { securityConfig } from './config/security';
 import errorMiddleware from './middleware/errorMiddleware';
 import routes from './modules';
 
@@ -17,8 +18,19 @@ async function initializeApp() {
     await kafkaProducer.connect();
 
     // Middleware
-    app.use(cors({ origin: env.CORS_ORIGIN }));
-    app.use(helmet());
+    app.use(
+      cors({
+        origin: env.CORS_ORIGIN,
+        // Enable SSE support
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+      }),
+    );
+
+    // Apply security configuration
+    app.use(helmet(securityConfig));
+
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
 
@@ -37,20 +49,16 @@ async function initializeApp() {
     // Error handling
     app.use(errorMiddleware());
 
-    // Graceful shutdown
-    process.on('SIGTERM', async () => {
-      logger.info('SIGTERM signal received.');
-      await kafkaProducer.disconnect();
-      process.exit(0);
-    });
-
+    // Create HTTP server
     const server = http.createServer(app);
+
+    // Initialize WebSocket
     initializeWebSocket(server);
 
-    return server; // Return the HTTP server instead of the Express app
+    return server;
   } catch (error) {
-    logger.error('Failed to initialize application:', error);
-    process.exit(1);
+    logger.error('Failed to initialize app:', error);
+    throw error;
   }
 }
 

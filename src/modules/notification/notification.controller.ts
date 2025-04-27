@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { NotificationService } from './notification.service';
 import { asyncWrapper } from '../../utils/asyncWrapper';
 import { handleServiceResponse } from '../../utils/httpHandlers';
+import { sseManager } from '../../config/sseManager';
 
 export class NotificationController {
   private notificationService: NotificationService;
@@ -34,3 +35,8 @@ export class NotificationController {
 }
 
 export const notificationController = new NotificationController();
+
+export const streamNotifications = async (req: Request, res: Response): Promise<void> => {
+  const userId = req.user!.id;
+  sseManager.addClient(userId, res);
+};
